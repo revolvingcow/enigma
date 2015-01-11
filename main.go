@@ -3,12 +3,15 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/sha1"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -20,9 +23,12 @@ type Site struct {
 	NumberOfSpecialCharacters int    `json:numberOfSpecialCharacters`
 	NumberOfUpperCase         int    `json:numberOfUpperCase`
 	NumberOfDigits            int    `json:numberOfDigits`
+	Revision                  int    `json:revision`
 }
 
 func main() {
+	log.Printf("%x", getBookname("bmallred"))
+
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 	})
 
@@ -130,4 +136,41 @@ func Read(file string) ([]Site, error) {
 	}
 
 	return sites, nil
+}
+
+func getBookname(profile string) []byte {
+	sha := sha1.New()
+	sha.Write([]byte(profile))
+	return sha.Sum(nil)
+}
+
+func encrypt(clearText, profile, passphrase string) ([]byte, error) {
+	return nil, nil
+}
+
+func decrypt(encryptedText, profile, passphrase string) ([]byte, error) {
+	return nil, nil
+}
+
+func generatePassphrase(profile string, settings Site) ([]byte, error) {
+	clearText := fmt.Sprintf(
+		"%s-%s-%s",
+		strings.ToLower(profile),
+		strings.ToLower(settings.Host),
+		settings.Revision)
+
+	sha := sha512.New()
+	sha.Write([]byte(clearText))
+	return nil, nil
+}
+
+func containsDigits(source []byte, minOccurrences int) bool {
+	r := regexp.MustCompile(`\d+`)
+
+	var matches [][]byte
+	if matches = r.FindAll(source, -1); matches == nil {
+		return false
+	}
+
+	return len(matches) >= minOccurrences
 }
