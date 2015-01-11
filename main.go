@@ -27,8 +27,6 @@ type Site struct {
 }
 
 func main() {
-	log.Printf("%x", getBookname("bmallred"))
-
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 	})
 
@@ -173,4 +171,46 @@ func containsDigits(source []byte, minOccurrences int) bool {
 	}
 
 	return len(matches) >= minOccurrences
+}
+
+func containsUppercase(source []byte, minOccurrences int) bool {
+	r := regexp.MustCompile(`[A-Z]+`)
+
+	var matches [][]byte
+	if matches = r.FindAll(source, -1); matches == nil {
+		return false
+	}
+
+	return len(matches) >= minOccurrences
+}
+
+func containsSpecialCharacters(source []byte, specialCharacters string, minOccurrences int) bool {
+	s := specialCharacters
+	s = strings.Replace(s, "\\", "\\\\", -1)
+	s = strings.Replace(s, ".", "\\.", -1)
+	s = strings.Replace(s, " ", "\\s", -1)
+	s = strings.Replace(s, "-", "\\-", -1)
+	s = strings.Replace(s, "[", "\\[", -1)
+	s = strings.Replace(s, "]", "\\]", -1)
+
+	r := regexp.MustCompile(`[` + s + `]+`)
+
+	var matches [][]byte
+	if matches = r.FindAll(source, -1); matches == nil {
+		return false
+	}
+
+	return len(matches) >= minOccurrences
+}
+
+func validateLength(source []byte, minimum, maximum int) bool {
+	if minimum > -1 && len(source) < minimum {
+		return false
+	}
+
+	if maximum > -1 && len(source) > maximum {
+		return false
+	}
+
+	return true
 }
