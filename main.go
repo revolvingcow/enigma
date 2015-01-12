@@ -88,7 +88,6 @@ func Save(file string, sites []Site) error {
 		return err
 	}
 	defer gzipWriter.Close()
-
 	// Write to the file
 	fi, err := os.OpenFile(file, os.O_WRONLY, 0666)
 	if err != nil {
