@@ -159,11 +159,75 @@ func generatePassphrase(profile string, settings Site) ([]byte, error) {
 
 	sha := sha512.New()
 	sha.Write([]byte(clearText))
-	return nil, nil
+	hash := sha.Sum(nil)
+	hash = []byte(fmt.Sprintf("%x", hash))
+
+	// Apply site criteria
+	applySiteSettings(hash, settings)
+
+	// Ensure the length is adequate
+	if settings.MaximumLength > -1 {
+		hash = hash[:settings.MaximumLength]
+	}
+	if !validateLength(hash, settings.MinimumLength, settings.MaximumLength) {
+		log.Println("Does not meed the length requirements")
+	}
+
+	return hash, nil
+}
+
+func applySiteSettings(source []byte, settings Site) []byte {
+	if !containsUppercase(source, settings.NumberOfUpperCase) {
+		i := 0
+		r := regexp.MustCompile(`[a-z]+`)
+
+		var matches [][]int
+		if matches = r.FindAllIndex(source, -1); matches != nil {
+			for _, v := range matches {
+				if i < settings.NumberOfUpperCase {
+					c := strings.ToUpper(string(source[v[0]]))
+					source[v[0]] = []byte(c)[0]
+					i += 1
+				}
+			}
+		}
+	}
+
+	if !containsDigits(source, settings.NumberOfDigits) {
+		i := 0
+		r := regexp.MustCompile(`[a-z]+`)
+
+		var matches [][]int
+		if matches = r.FindAllIndex(source, -1); matches != nil {
+			for _, v := range matches {
+				if i < settings.NumberOfDigits {
+					source[v[0]] = byte(i)
+					i += 1
+				}
+			}
+		}
+	}
+
+	if !containsSpecialCharacters(source, settings.SpecialCharacters, settings.NumberOfSpecialCharacters) {
+		i := 0
+		r := regexp.MustCompile(`[a-z]+`)
+
+		var matches [][]int
+		if matches = r.FindAllIndex(source, -1); matches != nil {
+			for _, v := range matches {
+				if i < settings.NumberOfSpecialCharacters {
+					i += 1
+					source[v[0]] = []byte(settings.SpecialCharacters)[len(settings.SpecialCharacters)-i]
+				}
+			}
+		}
+	}
+
+	return source
 }
 
 func containsDigits(source []byte, minOccurrences int) bool {
-	r := regexp.MustCompile(`\d+`)
+	r := regexp.MustCompile(`\d`)
 
 	var matches [][]byte
 	if matches = r.FindAll(source, -1); matches == nil {

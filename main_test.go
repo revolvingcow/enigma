@@ -1,6 +1,35 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"log"
+	"testing"
+)
+
+func TestGeneratePassphrase(t *testing.T) {
+	profile := "guest"
+	//passphrase := "secret"
+	site := Site{
+		Host:                      "google.com",
+		MinimumLength:             6,
+		MaximumLength:             18,
+		SpecialCharacters:         " !@#$%^&*()_+-=<>,./|\\",
+		NumberOfSpecialCharacters: 2,
+		NumberOfDigits:            2,
+		NumberOfUpperCase:         1,
+	}
+	i := 0
+
+	expected := "15898B4\\3738|f656d"
+	for i = 0; i < 2; i++ {
+		b, _ := generatePassphrase(profile, site)
+		actual := fmt.Sprintf("%s", string(b))
+		if actual != expected {
+			log.Println(actual)
+			t.FailNow()
+		}
+	}
+}
 
 func TestContainsDigits(t *testing.T) {
 	expected := true
