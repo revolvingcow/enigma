@@ -19,7 +19,7 @@ func TestGeneratePassphrase(t *testing.T) {
 	}
 	i := 0
 
-	expected := "15898B4\\3738|f656d"
+	expected := "C\\041|e1dc001da138"
 	for i = 0; i < 2; i++ {
 		b, _ := generatePassphrase(profile, passphrase, site)
 		actual := fmt.Sprintf("%s", string(b))

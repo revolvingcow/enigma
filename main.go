@@ -157,8 +157,9 @@ func decrypt(encryptedText, profile, passphrase string) ([]byte, error) {
 // Generate the passphrase
 func generatePassphrase(profile, passphrase string, settings Site) ([]byte, error) {
 	clearText := fmt.Sprintf(
-		"%s-%s-%s",
+		"%s-%s-%s-%s",
 		strings.ToLower(profile),
+		strings.ToLower(passphrase),
 		strings.ToLower(settings.Host),
 		settings.Revision)
 
