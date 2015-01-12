@@ -103,6 +103,7 @@ func Save(file string, sites []Site) error {
 	return nil
 }
 
+// Read the password book
 func Read(file string) ([]Site, error) {
 	// If the file doesn't exist yet no worries
 	if _, err := os.Stat(file); os.IsNotExist(err) {
@@ -136,21 +137,25 @@ func Read(file string) ([]Site, error) {
 	return sites, nil
 }
 
+// Get the book name
 func getBookname(profile string) []byte {
 	sha := sha1.New()
 	sha.Write([]byte(profile))
 	return sha.Sum(nil)
 }
 
+// Encrypt the password book
 func encrypt(clearText, profile, passphrase string) ([]byte, error) {
 	return nil, nil
 }
 
+// Decrypt the password book
 func decrypt(encryptedText, profile, passphrase string) ([]byte, error) {
 	return nil, nil
 }
 
-func generatePassphrase(profile string, settings Site) ([]byte, error) {
+// Generate the passphrase
+func generatePassphrase(profile, passphrase string, settings Site) ([]byte, error) {
 	clearText := fmt.Sprintf(
 		"%s-%s-%s",
 		strings.ToLower(profile),
@@ -165,10 +170,12 @@ func generatePassphrase(profile string, settings Site) ([]byte, error) {
 	// Apply site criteria
 	applySiteSettings(hash, settings)
 
-	// Ensure the length is adequate
+	// If there is a maximum length truncate the hash
 	if settings.MaximumLength > -1 {
 		hash = hash[:settings.MaximumLength]
 	}
+
+	// Ensure the length is adequate
 	if !validateLength(hash, settings.MinimumLength, settings.MaximumLength) {
 		log.Println("Does not meed the length requirements")
 	}
@@ -176,6 +183,7 @@ func generatePassphrase(profile string, settings Site) ([]byte, error) {
 	return hash, nil
 }
 
+// Apply site settings to the hashed value
 func applySiteSettings(source []byte, settings Site) []byte {
 	if !containsUppercase(source, settings.NumberOfUpperCase) {
 		i := 0
@@ -226,6 +234,7 @@ func applySiteSettings(source []byte, settings Site) []byte {
 	return source
 }
 
+// Determine if the hash currently contains the appropriate amount of digits
 func containsDigits(source []byte, minOccurrences int) bool {
 	r := regexp.MustCompile(`\d`)
 
@@ -237,6 +246,7 @@ func containsDigits(source []byte, minOccurrences int) bool {
 	return len(matches) >= minOccurrences
 }
 
+// Determine if the hash currently contains the appropriate amount of uppercase characters
 func containsUppercase(source []byte, minOccurrences int) bool {
 	r := regexp.MustCompile(`[A-Z]+`)
 
@@ -248,6 +258,8 @@ func containsUppercase(source []byte, minOccurrences int) bool {
 	return len(matches) >= minOccurrences
 }
 
+// Determine if the hash currently contains the appropriate amount of special characters from the allowed
+// character set
 func containsSpecialCharacters(source []byte, specialCharacters string, minOccurrences int) bool {
 	s := specialCharacters
 	s = strings.Replace(s, "\\", "\\\\", -1)
@@ -267,6 +279,7 @@ func containsSpecialCharacters(source []byte, specialCharacters string, minOccur
 	return len(matches) >= minOccurrences
 }
 
+// Determine if the hash currently abides by the length restrictions
 func validateLength(source []byte, minimum, maximum int) bool {
 	if minimum > -1 && len(source) < minimum {
 		return false

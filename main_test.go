@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"testing"
 )
 
 func TestGeneratePassphrase(t *testing.T) {
 	profile := "guest"
-	//passphrase := "secret"
+	passphrase := "secret"
 	site := Site{
 		Host:                      "google.com",
 		MinimumLength:             6,
@@ -22,10 +21,9 @@ func TestGeneratePassphrase(t *testing.T) {
 
 	expected := "15898B4\\3738|f656d"
 	for i = 0; i < 2; i++ {
-		b, _ := generatePassphrase(profile, site)
+		b, _ := generatePassphrase(profile, passphrase, site)
 		actual := fmt.Sprintf("%s", string(b))
 		if actual != expected {
-			log.Println(actual)
 			t.FailNow()
 		}
 	}
