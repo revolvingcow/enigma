@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 type Site struct {
@@ -25,6 +26,13 @@ type Site struct {
 	NumberOfUpperCase         int    `json:numberOfUpperCase`
 	NumberOfDigits            int    `json:numberOfDigits`
 	Revision                  int    `json:revision`
+	Password                  string `json:",omitempty"`
+}
+
+type Page struct {
+	Profile    string
+	Passphrase string
+	Sites      []Site
 }
 
 func main() {
@@ -56,17 +64,18 @@ func main() {
 		}
 
 		book := getBookname(profile)
-		sites, err := Read(book, passphrase)
+		sites, err := read(book, passphrase)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		sites = append(sites, site)
-		err = Save(book, passphrase, sites)
+		err = save(book, passphrase, sites)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		http.Redirect(w, r, "/", 200)
 	})
 	http.HandleFunc("/api/update", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
@@ -92,17 +101,18 @@ func main() {
 		} else if cmd == "update" {
 			if newPassphrase != confirmPassphrase {
 			}
-			sites, err := Read(book, passphrase)
+			sites, err := read(book, passphrase)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			err = Save(book, newPassphrase, sites)
+			err = save(book, newPassphrase, sites)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
+		http.Redirect(w, r, "/", 200)
 	})
 	http.HandleFunc("/api/refresh", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
@@ -116,7 +126,7 @@ func main() {
 
 		// Update the revision number and generate a new password
 		book := getBookname(profile)
-		sites, err := Read(book, passphrase)
+		sites, err := read(book, passphrase)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -127,11 +137,12 @@ func main() {
 				break
 			}
 		}
-		err = Save(book, passphrase, sites)
+		err = save(book, passphrase, sites)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		http.Redirect(w, r, "/", 200)
 	})
 	http.HandleFunc("/api/remove", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
@@ -145,7 +156,7 @@ func main() {
 
 		// Remove the site from our book and save it
 		book := getBookname(profile)
-		sites, err := Read(book, passphrase)
+		sites, err := read(book, passphrase)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -156,60 +167,53 @@ func main() {
 				break
 			}
 		}
-		err = Save(book, passphrase, sites)
+		err = save(book, passphrase, sites)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		http.Redirect(w, r, "/", 200)
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
 		passphrase := r.FormValue("p")
-		//path := strings.TrimPrefix(r.URL.Path, "/")
 
 		if profile == "" || passphrase == "" {
-			// Index
-			page, err := ioutil.ReadFile("index.html")
-			if err != nil {
-				http.NotFound(w, r)
-				return
-			}
-
-			fmt.Fprintf(w, string(page))
+			fmt.Fprintf(w, templateIndex)
 		} else {
-			// A passphrase has been entered
-			page, err := ioutil.ReadFile("book.html")
+			book := getBookname(profile)
+			sites, err := read(book, passphrase)
 			if err != nil {
-				http.NotFound(w, r)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			for _, s := range sites {
+				p, err := generatePassphrase(profile, passphrase, s)
+				if err != nil {
+				}
+				s.Password = fmt.Sprintf("%s", string(p))
+			}
 
-			fmt.Fprintf(w, string(page))
+			page := Page{
+				Profile:    profile,
+				Passphrase: passphrase,
+				Sites:      sites,
+			}
+
+			t := template.Must(template.New("book").Parse(templateBook))
+			err = t.Execute(w, page)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	})
 
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
-
-	//execDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
-	//file := filepath.Join(execDir, "enigma.safe")
-	//sites, err := Read(file)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//log.Println(sites)
-
-	//err = Save(file, sites)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 }
 
-func Save(file, passphrase string, sites []Site) error {
+func save(file, passphrase string, sites []Site) error {
 	// If the file doesn't exist then create it
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		_, err = os.Create(file)
@@ -225,56 +229,56 @@ func Save(file, passphrase string, sites []Site) error {
 	}
 
 	// Compress the contents
-	buffer := bytes.NewBuffer(b)
-	gzipWriter := gzip.NewWriter(buffer)
+	var buffer bytes.Buffer
+	gzip := gzip.NewWriter(&buffer)
 	if err != nil {
 		return err
 	}
-	defer gzipWriter.Close()
+	gzip.Write(b)
+	gzip.Close()
+
 	// Write to the file
 	fi, err := os.OpenFile(file, os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
-	defer fi.Close()
 	_, err = fi.Write(buffer.Bytes())
 	if err != nil {
 		return err
 	}
+	fi.Close()
 
 	return nil
 }
 
 // Read the password book
-func Read(file, passphrase string) ([]Site, error) {
+func read(file, passphrase string) ([]Site, error) {
 	// If the file doesn't exist yet no worries
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return []Site{}, nil
 	}
 
 	// Bring in the compressed data
-	log.Println("Reading compressed file")
-	compressed, err := ioutil.ReadFile(file)
+	fi, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}
 
 	// Decompress the file contents
-	log.Println("Decompressing")
-	buffer := bytes.NewBuffer(compressed)
-	gzipReader, err := gzip.NewReader(buffer)
+	gzip, err := gzip.NewReader(fi)
 	if err != nil {
 		return nil, err
 	}
-	defer gzipReader.Close()
+	decompressed, err := ioutil.ReadAll(gzip)
+	gzip.Close()
 
 	// Unmarshal the JSON information
-	log.Println("Unmarshal")
 	var sites []Site
-	err = json.Unmarshal(buffer.Bytes(), &sites)
+	err = json.Unmarshal(decompressed, &sites)
 	if err != nil {
 		return nil, err
 	}
+	fi.Close()
 
 	return sites, nil
 }
@@ -283,7 +287,7 @@ func Read(file, passphrase string) ([]Site, error) {
 func getBookname(profile string) string {
 	hash := md5.New()
 	hash.Write([]byte(profile))
-	return fmt.Sprintf("%s", string(hash.Sum(nil)))
+	return fmt.Sprintf("%x", string(hash.Sum(nil)))
 }
 
 // Encrypt the password book

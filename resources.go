@@ -1,4 +1,90 @@
-<!doctype html>
+package main
+
+const (
+	templateIndex string = `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Enigma Login</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css" />
+    <style type="text/css">
+        body {
+            padding-top: 40px;
+            padding-bottom: 40px;
+            background-color: #eee;
+        }
+
+        .form-signin {
+            max-width: 330px;
+            padding: 15px;
+            margin: 0 auto;
+        }
+        .form-signin .form-signin-heading,
+        .form-signin .checkbox {
+            margin-bottom: 10px;
+        }
+        .form-signin .checkbox {
+            font-weight: normal;
+        }
+        .form-signin .form-control {
+            position: relative;
+            height: auto;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .form-signin .form-control:focus {
+            z-index: 2;
+        }
+        .form-signin input[type="email"] {
+            margin-bottom: -1px;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .form-signin input[type="password"] {
+            margin-bottom: 10px;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+    </style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+    <div class="container">
+        <form action="/" method="post" class="form-signin">
+            <h2 class="form-signin-heading">Please sign in</h2>
+            <label for="profile" class="sr-only">Email address</label>
+            <input type="text" id="profile" name="profile" class="form-control" placeholder="Username" required autofocus>
+            <label for="p" class="sr-only">Password</label>
+            <input type="password" id="p" name="p" class="form-control" placeholder="Password" required>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="remember-me"> Remember me
+                </label>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>`
+
+	templateBook string = `<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -39,6 +125,9 @@
         <h1>Enigma</h1>
         <h2><small>Your personal password safe and generator</small></h2>
 
+		{{ $profile := .Profile }}
+		{{ $passphrase := .Passphrase }}
+
         <div role="tabpanel">
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#passwords" aria-controls="passwords" role="tab" data-toggle="tab">Passwords</a></li>
@@ -56,55 +145,36 @@
                             </tr>
                         </thead>
                         <tbody>
+							{{ range .Sites }}
                             <tr>
-                                <td>google.com</td>
+                                <td>{{ .Host }}</td>
                                 <td>
                                     <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
-                                    <form class="form form-horizontal" style="display: inline-block;" action="http://localhost:8080/api/refresh" method="post">
-                                        <input name="profile" type="hidden" />
-                                        <input name="p" type="hidden" />
-                                        <input name="host" type="hidden" />
+                                    <form class="form form-horizontal" style="display: inline-block;" action="/api/refresh" method="post">
+                                        <input name="profile" type="hidden" value="{{ $profile }}" />
+                                        <input name="p" type="hidden" value="{{ $passphrase }}" />
+                                        <input name="host" type="hidden" value="{{ .Host }}" />
                                         <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
                                     </form>
-                                    <span>jfkle3r0934uf09jeafasdfjkajdf</span>
+                                    <span>{{ .Password }}</span>
                                 </td>
                                 <td class="text-right">
-                                    <form class="form form-horizontal" action="http://localhost:8080/api/remove" method="post">
-                                        <input name="profile" type="hidden" />
-                                        <input name="p" type="hidden" />
-                                        <input name="host" type="hidden" />
+                                    <form class="form form-horizontal" action="/api/remove" method="post">
+                                        <input name="profile" type="hidden" value="{{ $profile }}" />
+                                        <input name="p" type="hidden" value="{{ $passphrase }}" />
+                                        <input name="host" type="hidden" value="{{ .Host }}" />
                                         <button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
                                     </form>
                                 </td>
                             </tr>
-                            <tr>
-                                <td>yahoo.com</td>
-                                <td>
-                                    <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
-                                    <form class="form form-horizontal" style="display: inline-block;" action="http://localhost:8080/api/refresh" method="post">
-                                        <input name="profile" type="hidden" />
-                                        <input name="p" type="hidden" />
-                                        <input name="host" type="hidden" />
-                                        <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
-                                    </form>
-                                    <span>jfkle3r0934uf09jeafasdfjkajdf</span>
-                                </td>
-                                <td class="text-right">
-                                    <form class="form form-horizontal" action="http://localhost:8080/api/remove" method="post">
-                                        <input name="profile" type="hidden" />
-                                        <input name="p" type="hidden" />
-                                        <input name="host" type="hidden" />
-                                        <button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
-                                    </form>
-                                </td>
-                            </tr>
+							{{ end }}
                         </tbody>
                     </table>
                 </div>
                 <div role="tabpanel" class="tab-pane" id="add">
-                    <form class="form form-horizontal" action="http://localhost:8080/api/generate" method="post">
-                        <input name="profile" type="hidden" />
-                        <input name="p" type="hidden" />
+                    <form class="form form-horizontal" action="/api/generate" method="post">
+						<input name="profile" type="hidden" value="{{ $profile }}" />
+						<input name="p" type="hidden" value="{{ $passphrase }}" />
                         <div class="form-group">
                             <label for="host" class="col-xs-3 control-label">Site</label>
                             <div class="col-xs-9">
@@ -223,9 +293,9 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="settings">
                     <div class="row">
-                        <form class="form form-horizontal" action="http://localhost:8080/api/update" method="post">
-                            <input name="profile" type="hidden" />
-                            <input name="p" type="hidden" />
+                        <form class="form form-horizontal" action="/api/update" method="post">
+							<input name="profile" type="hidden" value="{{ $profile }}" />
+							<input name="p" type="hidden" value="{{ $passphrase }}" />
                             <div class="form-group">
                                 <label for="newPassphrase" class="col-xs-3 control-label">New passphrase</label>
                                 <div class="col-xs-9">
@@ -256,4 +326,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 </body>
-</html>
+</html>`
+)
