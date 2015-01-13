@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/sha1"
+	"crypto/md5"
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
@@ -30,7 +30,7 @@ type Site struct {
 func main() {
 	http.HandleFunc("/api/generate", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
-		//passphrase := r.FormValue("p")
+		passphrase := r.FormValue("p")
 		host := r.FormValue("host")
 		minimumLength, _ := strconv.Atoi(r.FormValue("minimumLength"))
 		maximumLength, _ := strconv.Atoi(r.FormValue("maximumLength"))
@@ -38,6 +38,11 @@ func main() {
 		minimumUppercase, _ := strconv.Atoi(r.FormValue("minimumUppercase"))
 		minimumSpecialCharacters, _ := strconv.Atoi(r.FormValue("minimumSpecialCharacters"))
 		specialCharacters := r.FormValue("specialCharacters")
+
+		if profile == "" || passphrase == "" || host == "" {
+			http.Error(w, "Missing credentials", http.StatusUnauthorized)
+			return
+		}
 
 		site := Site{
 			Host:                      host,
@@ -51,35 +56,70 @@ func main() {
 		}
 
 		book := getBookname(profile)
-		sites, err := Read(book)
+		sites, err := Read(book, passphrase)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		sites = append(sites, site)
-		err = Save(book, sites)
+		err = Save(book, passphrase, sites)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 	http.HandleFunc("/api/update", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
-		//passphrase := r.FormValue("p")
-		//newPassphrase := r.FormValue("newPassphrase")
-		//confirmPassphrase := r.FormValue("confirmPassphrase")
+		passphrase := r.FormValue("p")
+		newPassphrase := r.FormValue("newPassphrase")
+		confirmPassphrase := r.FormValue("confirmPassphrase")
+		cmd := r.FormValue("cmd")
+
+		if profile == "" || passphrase == "" || newPassphrase == "" || confirmPassphrase == "" || cmd == "" {
+			http.Error(w, "Missing credentials", http.StatusUnauthorized)
+			return
+		}
 
 		book := getBookname(profile)
-		err := os.Remove(book)
-		if err != nil {
-			// Return an error
+
+		if cmd == "delete" {
+			err := os.Remove(book)
+			if err != nil {
+				// Return an error
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else if cmd == "update" {
+			if newPassphrase != confirmPassphrase {
+			}
+			sites, err := Read(book, passphrase)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			err = Save(book, newPassphrase, sites)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	})
 	http.HandleFunc("/api/refresh", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
-		//passphrase := r.FormValue("p")
+		passphrase := r.FormValue("p")
 		host := r.FormValue("host")
+
+		if profile == "" || passphrase == "" || host == "" {
+			http.Error(w, "Missing credentials", http.StatusUnauthorized)
+			return
+		}
 
 		// Update the revision number and generate a new password
 		book := getBookname(profile)
-		sites, err := Read(book)
+		sites, err := Read(book, passphrase)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		for _, site := range sites {
 			if site.Host == host {
@@ -87,25 +127,39 @@ func main() {
 				break
 			}
 		}
-		err = Save(book, sites)
+		err = Save(book, passphrase, sites)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 	http.HandleFunc("/api/remove", func(w http.ResponseWriter, r *http.Request) {
 		profile := r.FormValue("profile")
-		//passphrase := r.FormValue("p")
+		passphrase := r.FormValue("p")
 		host := r.FormValue("host")
+
+		if profile == "" || passphrase == "" || host == "host" {
+			http.Error(w, "Missing credentials", http.StatusUnauthorized)
+			return
+		}
 
 		// Remove the site from our book and save it
 		book := getBookname(profile)
-		sites, err := Read(book)
+		sites, err := Read(book, passphrase)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		for i, site := range sites {
 			if site.Host == host {
 				sites = append(sites[:i], sites[i+1:]...)
 				break
 			}
+		}
+		err = Save(book, passphrase, sites)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 
@@ -145,7 +199,7 @@ func main() {
 	//}
 }
 
-func Save(file string, sites []Site) error {
+func Save(file, passphrase string, sites []Site) error {
 	// If the file doesn't exist then create it
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		_, err = os.Create(file)
@@ -182,7 +236,7 @@ func Save(file string, sites []Site) error {
 }
 
 // Read the password book
-func Read(file string) ([]Site, error) {
+func Read(file, passphrase string) ([]Site, error) {
 	// If the file doesn't exist yet no worries
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return []Site{}, nil
@@ -217,9 +271,9 @@ func Read(file string) ([]Site, error) {
 
 // Get the book name
 func getBookname(profile string) string {
-	sha := sha1.New()
-	sha.Write([]byte(profile))
-	return string(sha.Sum(nil))
+	hash := md5.New()
+	hash.Write([]byte(profile))
+	return fmt.Sprintf("%s", string(hash.Sum(nil)))
 }
 
 // Encrypt the password book
