@@ -164,8 +164,11 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimPrefix(r.URL.Path, "/")
-		if path == "" {
+		profile := r.FormValue("profile")
+		passphrase := r.FormValue("p")
+		//path := strings.TrimPrefix(r.URL.Path, "/")
+
+		if profile == "" || passphrase == "" {
 			// Index
 			page, err := ioutil.ReadFile("index.html")
 			if err != nil {
@@ -176,6 +179,13 @@ func main() {
 			fmt.Fprintf(w, string(page))
 		} else {
 			// A passphrase has been entered
+			page, err := ioutil.ReadFile("book.html")
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+
+			fmt.Fprintf(w, string(page))
 		}
 	})
 
