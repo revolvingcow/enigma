@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -27,7 +28,85 @@ type Site struct {
 }
 
 func main() {
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/generate", func(w http.ResponseWriter, r *http.Request) {
+		profile := r.FormValue("profile")
+		//passphrase := r.FormValue("p")
+		host := r.FormValue("host")
+		minimumLength, _ := strconv.Atoi(r.FormValue("minimumLength"))
+		maximumLength, _ := strconv.Atoi(r.FormValue("maximumLength"))
+		minimumDigits, _ := strconv.Atoi(r.FormValue("minimumDigits"))
+		minimumUppercase, _ := strconv.Atoi(r.FormValue("minimumUppercase"))
+		minimumSpecialCharacters, _ := strconv.Atoi(r.FormValue("minimumSpecialCharacters"))
+		specialCharacters := r.FormValue("specialCharacters")
+
+		site := Site{
+			Host:                      host,
+			MinimumLength:             minimumLength,
+			MaximumLength:             maximumLength,
+			SpecialCharacters:         specialCharacters,
+			NumberOfSpecialCharacters: minimumSpecialCharacters,
+			NumberOfDigits:            minimumDigits,
+			NumberOfUpperCase:         minimumUppercase,
+			Revision:                  0,
+		}
+
+		book := getBookname(profile)
+		sites, err := Read(book)
+		if err != nil {
+		}
+		sites = append(sites, site)
+		err = Save(book, sites)
+		if err != nil {
+		}
+	})
+	http.HandleFunc("/api/update", func(w http.ResponseWriter, r *http.Request) {
+		profile := r.FormValue("profile")
+		//passphrase := r.FormValue("p")
+		//newPassphrase := r.FormValue("newPassphrase")
+		//confirmPassphrase := r.FormValue("confirmPassphrase")
+
+		book := getBookname(profile)
+		err := os.Remove(book)
+		if err != nil {
+			// Return an error
+		}
+	})
+	http.HandleFunc("/api/refresh", func(w http.ResponseWriter, r *http.Request) {
+		profile := r.FormValue("profile")
+		//passphrase := r.FormValue("p")
+		host := r.FormValue("host")
+
+		// Update the revision number and generate a new password
+		book := getBookname(profile)
+		sites, err := Read(book)
+		if err != nil {
+		}
+		for _, site := range sites {
+			if site.Host == host {
+				site.Revision++
+				break
+			}
+		}
+		err = Save(book, sites)
+		if err != nil {
+		}
+	})
+	http.HandleFunc("/api/remove", func(w http.ResponseWriter, r *http.Request) {
+		profile := r.FormValue("profile")
+		//passphrase := r.FormValue("p")
+		host := r.FormValue("host")
+
+		// Remove the site from our book and save it
+		book := getBookname(profile)
+		sites, err := Read(book)
+		if err != nil {
+		}
+		for i, site := range sites {
+			if site.Host == host {
+				sites = append(sites[:i], sites[i+1:]...)
+				break
+			}
+		}
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -137,10 +216,10 @@ func Read(file string) ([]Site, error) {
 }
 
 // Get the book name
-func getBookname(profile string) []byte {
+func getBookname(profile string) string {
 	sha := sha1.New()
 	sha.Write([]byte(profile))
-	return sha.Sum(nil)
+	return string(sha.Sum(nil))
 }
 
 // Encrypt the password book

@@ -9,7 +9,6 @@
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css" />
-    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.1/flatly/bootstrap.min.css" />-->
     <style type="text/css">
         body {
             padding-top: 40px;
@@ -41,60 +40,81 @@
         <h2><small>Your personal password safe and generator</small></h2>
 
         <div role="tabpanel">
-            <!-- Nav tabs -->
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#passwords" aria-controls="passwords" role="tab" data-toggle="tab">Passwords</a></li>
                 <li role="presentation"><a href="#add" aria-controls="Add" role="tab" data-toggle="tab">Add</a></li>
                 <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
             </ul>
-
-            <!-- Tab panes -->
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane active" id="passwords">
-                    <form id="book" class="form form-horizontal">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Site</th>
-                                    <th>Password</th>
-                                    <th>&nbsp;</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>google.com</td>
-                                    <td>
-                                        <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Site</th>
+                                <th>Password</th>
+                                <th>&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>google.com</td>
+                                <td>
+                                    <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
+                                    <form class="form form-horizontal" style="display: inline-block;" action="http://localhost:8080/api/refresh" method="post">
+                                        <input name="profile" type="hidden" />
+                                        <input name="p" type="hidden" />
+                                        <input name="host" type="hidden" />
                                         <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
-                                        <span>jfkle3r0934uf09jeafasdfjkajdf</span>
-                                    </td>
-                                    <td><button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button></td>
-                                </tr>
-                                <tr>
-                                    <td>yahoo.com</td>
-                                    <td>
-                                        <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
+                                    </form>
+                                    <span>jfkle3r0934uf09jeafasdfjkajdf</span>
+                                </td>
+                                <td class="text-right">
+                                    <form class="form form-horizontal" action="http://localhost:8080/api/remove" method="post">
+                                        <input name="profile" type="hidden" />
+                                        <input name="p" type="hidden" />
+                                        <input name="host" type="hidden" />
+                                        <button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>yahoo.com</td>
+                                <td>
+                                    <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></button>
+                                    <form class="form form-horizontal" style="display: inline-block;" action="http://localhost:8080/api/refresh" method="post">
+                                        <input name="profile" type="hidden" />
+                                        <input name="p" type="hidden" />
+                                        <input name="host" type="hidden" />
                                         <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
-                                        <span>jfkle3r0934uf09jeafasdfjkajdf</span>
-                                    </td>
-                                    <td><button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </form>
+                                    </form>
+                                    <span>jfkle3r0934uf09jeafasdfjkajdf</span>
+                                </td>
+                                <td class="text-right">
+                                    <form class="form form-horizontal" action="http://localhost:8080/api/remove" method="post">
+                                        <input name="profile" type="hidden" />
+                                        <input name="p" type="hidden" />
+                                        <input name="host" type="hidden" />
+                                        <button class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div role="tabpanel" class="tab-pane" id="add">
-                    <form id="add" class="form form-horizontal">
+                    <form class="form form-horizontal" action="http://localhost:8080/api/generate" method="post">
+                        <input name="profile" type="hidden" />
+                        <input name="p" type="hidden" />
                         <div class="form-group">
-                            <label for="site" class="col-md-2 control-label">Site</label>
-                            <div class="col-md-10">
-                                <input type="text" class="form-control" id="site" placeholder="gmail.com" />
+                            <label for="host" class="col-xs-3 control-label">Site</label>
+                            <div class="col-xs-9">
+                                <input id="host" name="host" type="text" class="form-control" placeholder="gmail.com" />
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="minimumLength" class="col-md-2 control-label">Minimum Length</label>
-                            <div class="col-md-2">
-                                <select id="minimumLength" class="form-control">
+                            <label for="minimumLength" class="col-xs-3 control-label">Minimum Length</label>
+                            <div class="col-xs-3">
+                                <select id="minimumLength" name="minimumLength" class="form-control">
                                     <option value="-1">No Limit</option>
                                     <option>1</option>
                                     <option>2</option>
@@ -110,9 +130,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="maximumLength" class="col-md-2 control-label">Maximum Length</label>
-                            <div class="col-md-2">
-                                <select id="maximumLength" class="form-control">
+                            <label for="maximumLength" class="col-xs-3 control-label">Maximum Length</label>
+                            <div class="col-xs-3">
+                                <select id="maximumLength" name="maximumLength" class="form-control">
                                     <option value="-1">No Limit</option>
                                     <option>4</option>
                                     <option>5</option>
@@ -135,9 +155,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="minimumDigits" class="col-md-2 control-label">Minimum Digits</label>
-                            <div class="col-md-2">
-                                <select id="minimumDigits" class="form-control">
+                            <label for="minimumDigits" class="col-xs-3 control-label">Minimum Digits</label>
+                            <div class="col-xs-3">
+                                <select id="minimumDigits" name="minimumLength" class="form-control">
                                     <option>0</option>
                                     <option>1</option>
                                     <option>2</option>
@@ -153,9 +173,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="minimumUppercase" class="col-md-2 control-label">Minimum Uppercase</label>
-                            <div class="col-md-2">
-                                <select id="minimumUppercase" class="form-control">
+                            <label for="minimumUppercase" class="col-xs-3 control-label">Minimum Uppercase</label>
+                            <div class="col-xs-3">
+                                <select id="minimumUppercase" name="minimumUppercase" class="form-control">
                                     <option>0</option>
                                     <option>1</option>
                                     <option>2</option>
@@ -171,9 +191,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="minimumSpecialCharacters" class="col-md-2 control-label">Minimum Special Characters</label>
-                            <div class="col-md-2">
-                                <select id="minimumSpecialCharacters" class="form-control">
+                            <label for="minimumSpecialCharacters" class="col-xs-3 control-label">Minimum Special Characters</label>
+                            <div class="col-xs-3">
+                                <select id="minimumSpecialCharacters" name="minimumSpecialCharacters" class="form-control">
                                     <option>0</option>
                                     <option>1</option>
                                     <option>2</option>
@@ -189,13 +209,13 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="specialCharacters" class="col-md-2 control-label">Special Characters</label>
-                            <div class="col-md-5">
-                                <input type="text" class="form-control" id="specialCharacters" value=" !@#$%^&*()_+-=<>,." />
+                            <label for="specialCharacters" class="col-xs-3 control-label">Special Characters</label>
+                            <div class="col-xs-9">
+                                <input id="specialCharacters" name="specialCharacters" type="text" class="form-control" value=" !@#$%^&*()_+-=<>,." />
                             </div>
                         </div>
                         <div class="form-group">
-                            <div class="col-md-offset-2 col-md-10">
+                            <div class="col-xs-offset-3 col-xs-10">
                                 <button type="submit" class="btn btn-default">Generate Password</button>
                             </div>
                         </div>
@@ -203,22 +223,26 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="settings">
                     <div class="row">
-                        <form id="add" class="form form-horizontal">
+                        <form class="form form-horizontal" action="http://localhost:8080/api/update" method="post">
+                            <input name="profile" type="hidden" />
+                            <input name="p" type="hidden" />
                             <div class="form-group">
-                                <label for="newPassphrase" class="col-md-2 control-label">New passphrase</label>
-                                <div class="col-md-5">
-                                    <input type="password" class="form-control" id="newPassphrase" placeholder="" />
+                                <label for="newPassphrase" class="col-xs-3 control-label">New passphrase</label>
+                                <div class="col-xs-9">
+                                    <input id="newPassphrase" type="password" class="form-control" placeholder="" />
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="confirmPassphrase" class="col-md-2 control-label">Confirm passphrase</label>
-                                <div class="col-md-5">
-                                    <input type="password" class="form-control" id="confirmPassphrase" placeholder="" />
+                                <label for="confirmPassphrase" class="col-xs-3 control-label">Confirm passphrase</label>
+                                <div class="col-xs-9">
+                                    <input id="confirmPassphrase" type="password" class="form-control" placeholder="" />
                                 </div>
                             </div>
                             <div class="form-group">
-                                <div class="col-md-offset-2 col-md-10">
+                                <div class="col-xs-offset-3 col-xs-6">
                                     <button type="submit" class="btn btn-default">Update Passphrase</button>
+                                </div>
+                                <div class="col-xs-3 text-right">
                                     <button type="submit" value="delete" class="btn btn-danger">Delete Profile</button>
                                 </div>
                             </div>
@@ -231,5 +255,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script>
+        $(function () {
+        })
+    </script>
 </body>
 </html>
