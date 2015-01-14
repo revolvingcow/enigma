@@ -10,7 +10,7 @@ func main() {
 	http.HandleFunc("/api/update", ProfileHandler)
 	http.HandleFunc("/api/refresh", RefreshHandler)
 	http.HandleFunc("/api/remove", RemoveHandler)
-	http.HandleFunc("/signout", SignOffHandler)
+	http.HandleFunc("/signout", SignOutHandler)
 	http.HandleFunc("/book", BookHandler)
 	http.HandleFunc("/", DefaultHandler)
 

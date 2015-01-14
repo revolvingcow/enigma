@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 )
 
 type Page struct {
@@ -30,6 +31,8 @@ func GenerateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing credentials", http.StatusUnauthorized)
 		return
 	}
+
+	passphrase = string(decodeBase64([]byte(passphrase)))
 
 	u, err := url.Parse(host)
 	if err != nil {
@@ -81,9 +84,15 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book := getBookname(profile)
+	passphrase = string(decodeBase64([]byte(passphrase)))
 
-	if cmd == "delete" {
+	switch cmd {
+	default:
+		// This should never happen, but just in case send them back
+		http.Redirect(w, r, "/book", http.StatusSeeOther)
+		return
+	case "delete":
+		book := getBookname(profile)
 		err := os.Remove(book)
 		if err != nil {
 			// Return an error
@@ -92,12 +101,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-	} else if cmd == "update" {
+		break
+	case "update":
 		if newPassphrase == "" || confirmPassphrase == "" || newPassphrase != confirmPassphrase {
 			http.Error(w, "Invalid passphrase provided", http.StatusInternalServerError)
 			return
 		}
 
+		book := getBookname(profile)
 		sites, err := read(book, passphrase)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,10 +120,13 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, "/book", http.StatusSeeOther)
-	} else {
-		// This should never happen, but just in case send them back
-		http.Redirect(w, r, "/book", http.StatusSeeOther)
+		cookiePassphrase := &http.Cookie{
+			Name:   "passphrase",
+			MaxAge: -1,
+		}
+		http.SetCookie(w, cookiePassphrase)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		break
 	}
 }
 
@@ -125,6 +139,8 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing credentials", http.StatusUnauthorized)
 		return
 	}
+
+	passphrase = string(decodeBase64([]byte(passphrase)))
 
 	// Update the revision number and generate a new password
 	book := getBookname(profile)
@@ -158,6 +174,8 @@ func RemoveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	passphrase = string(decodeBase64([]byte(passphrase)))
+
 	// Remove the site from our book and save it
 	book := getBookname(profile)
 	sites, err := read(book, passphrase)
@@ -180,7 +198,7 @@ func RemoveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/book", http.StatusSeeOther)
 }
 
-func SignOffHandler(w http.ResponseWriter, r *http.Request) {
+func SignOutHandler(w http.ResponseWriter, r *http.Request) {
 	cookieProfile := &http.Cookie{
 		Name:   "profile",
 		MaxAge: -1,
@@ -207,8 +225,23 @@ func BookHandler(w http.ResponseWriter, r *http.Request) {
 
 		c, err = r.Cookie("passphrase")
 		if err == nil {
-			passphrase = c.Value
+			passphrase = string(decodeBase64([]byte(c.Value)))
 		}
+	} else {
+		// Set cookies
+		expire := time.Now().AddDate(0, 0, 1)
+		cookieProfile := &http.Cookie{
+			Name:    "profile",
+			Value:   profile,
+			Expires: expire,
+		}
+		cookiePassphrase := &http.Cookie{
+			Name:    "passphrase",
+			Value:   encodeBase64([]byte(passphrase)),
+			Expires: expire,
+		}
+		http.SetCookie(w, cookieProfile)
+		http.SetCookie(w, cookiePassphrase)
 	}
 
 	if profile == "" || passphrase == "" {
@@ -216,37 +249,11 @@ func BookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set cookies
-	//expire := time.Now().AddDate(0, 0, 1)
-	cookieProfile := &http.Cookie{
-		Name:  "profile",
-		Value: profile,
-		//Path:       "/",
-		//Domain:     "localhost",
-		//Expires:    expire,
-		//RawExpires: expire.Format(time.UnixDate),
-		//MaxAge:     0,
-		//Secure:     false,
-		//HttpOnly:   true,
-	}
-	http.SetCookie(w, cookieProfile)
-	cookiePassphrase := &http.Cookie{
-		Name:  "passphrase",
-		Value: passphrase,
-		//Path:       "/",
-		//Domain:     "localhost",
-		//Expires:    expire,
-		//RawExpires: expire.Format(time.UnixDate),
-		//MaxAge:     0,
-		//Secure:     false,
-		//HttpOnly:   true,
-	}
-	http.SetCookie(w, cookiePassphrase)
 	book := getBookname(profile)
-
 	sites, err := read(book, passphrase)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		//http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	for i, s := range sites {
@@ -256,7 +263,7 @@ func BookHandler(w http.ResponseWriter, r *http.Request) {
 
 	page := Page{
 		Profile:    profile,
-		Passphrase: passphrase,
+		Passphrase: encodeBase64([]byte(passphrase)),
 		Sites:      sites,
 	}
 

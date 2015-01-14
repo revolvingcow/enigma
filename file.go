@@ -24,6 +24,10 @@ func save(file, passphrase string, sites []Site) error {
 	if err != nil {
 		return err
 	}
+	b, err = encrypt(encodeBase64(b), passphrase)
+	if err != nil {
+		return err
+	}
 
 	// Compress the contents
 	var buffer bytes.Buffer
@@ -68,6 +72,13 @@ func read(file, passphrase string) ([]Site, error) {
 	}
 	decompressed, err := ioutil.ReadAll(gzip)
 	gzip.Close()
+
+	// Decrypt the contents
+	decompressed, err = decrypt(decompressed, passphrase)
+	if err != nil {
+		return nil, err
+	}
+	decompressed = decodeBase64(decompressed)
 
 	// Unmarshal the JSON information
 	var sites []Site
