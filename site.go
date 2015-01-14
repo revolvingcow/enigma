@@ -71,7 +71,7 @@ func (s *Site) applyCriteria(sha []byte) []byte {
 
 	if !containsSpecialCharacters(hash, s.SpecialCharacters, s.NumberOfSpecialCharacters) {
 		i := 0
-		r := regexp.MustCompile(`[a-z]+`)
+		r := regexp.MustCompile(`[0-9]+`)
 
 		var matches [][]int
 		if matches = r.FindAllIndex(hash, -1); matches != nil {

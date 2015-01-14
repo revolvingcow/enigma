@@ -31,14 +31,19 @@ func GenerateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := url.Parse(host)
+	u, err := url.Parse(host)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if u.Host == "" {
+		host = u.Path
+	} else {
+		host = u.Host
+	}
 
 	site := Site{
-		Host:                      url.Host,
+		Host:                      host,
 		MinimumLength:             minimumLength,
 		MaximumLength:             maximumLength,
 		SpecialCharacters:         specialCharacters,
@@ -71,7 +76,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	confirmPassphrase := r.FormValue("confirmPassphrase")
 	cmd := r.FormValue("cmd")
 
-	if profile == "" || passphrase == "" || newPassphrase == "" || confirmPassphrase == "" || cmd == "" {
+	if profile == "" || passphrase == "" {
 		http.Error(w, "Missing credentials", http.StatusUnauthorized)
 		return
 	}
@@ -85,9 +90,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else if cmd == "update" {
-		if newPassphrase != confirmPassphrase {
+		if newPassphrase == "" || confirmPassphrase == "" || newPassphrase != confirmPassphrase {
+			http.Error(w, "Invalid passphrase provided", http.StatusInternalServerError)
+			return
 		}
+
 		sites, err := read(book, passphrase)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -98,9 +108,12 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-	}
 
-	http.Redirect(w, r, "/book", http.StatusSeeOther)
+		http.Redirect(w, r, "/book", http.StatusSeeOther)
+	} else {
+		// This should never happen, but just in case send them back
+		http.Redirect(w, r, "/book", http.StatusSeeOther)
+	}
 }
 
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
