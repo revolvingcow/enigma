@@ -19,9 +19,9 @@ func TestGeneratePassphrase(t *testing.T) {
 	}
 	i := 0
 
-	expected := "C\\041|e1dc001da138"
+	expected := "Ce\\41ae|dc001da138"
 	for i = 0; i < 2; i++ {
-		b, _ := generatePassphrase(profile, passphrase, site)
+		b := site.generatePassphrase(profile, passphrase)
 		actual := fmt.Sprintf("%s", string(b))
 		if actual != expected {
 			t.FailNow()
@@ -85,6 +85,13 @@ func TestContainsSpecialCharacters(t *testing.T) {
 
 	expected = true
 	actual = containsSpecialCharacters([]byte("Blah!BLa l."), special, 2)
+	if actual != expected {
+		t.FailNow()
+	}
+
+	special = " "
+	expected = true
+	actual = containsSpecialCharacters([]byte("Blah BLa l "), special, 2)
 	if actual != expected {
 		t.FailNow()
 	}

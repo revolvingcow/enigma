@@ -106,6 +106,9 @@ const (
         .tab-content > .tab-pane {
             padding: 1em;
         }
+		span.password {
+			margin-left: 1em;
+		}
     </style>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -154,7 +157,7 @@ const (
                                         <input name="host" type="hidden" value="{{ .Host }}" />
 										<button class="btn btn-default btn-xs" title="Generate a new password"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
                                     </form>
-                                    <span>{{ .Password }}</span>
+                                    <span class="password">{{ .Password }}</span>
                                 </td>
                                 <td class="text-right">
                                     <form class="form form-horizontal" action="/api/remove" method="post">
@@ -311,7 +314,7 @@ const (
                                     <button name="cmd" value="update" type="submit" class="btn btn-default" title="Update profile passphrase">Update Passphrase</button>
                                 </div>
                                 <div class="col-xs-3 text-right">
-									<button name="cmd" value="delete" type="submit" class="btn btn-danger" title="Permanenantly delete this account">Delete Profile</button>
+									<button name="cmd" value="delete" type="submit" class="btn btn-danger" title="Permanently delete this account">Delete Profile</button>
                                 </div>
                             </div>
                         </form>

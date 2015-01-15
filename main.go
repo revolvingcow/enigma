@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -14,5 +15,15 @@ func main() {
 	http.HandleFunc("/book", BookHandler)
 	http.HandleFunc("/", DefaultHandler)
 
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	log.Fatal(http.ListenAndServe(address(), nil))
+}
+
+// Retrieve the web server address from the environment variable ENIGMA_SERVER if possible.
+// If the environment variable is not set then default to "localhost:8080".
+func address() string {
+	env := os.Getenv("ENIGMA_SERVER")
+	if env == "" {
+		return "localhost:8080"
+	}
+	return env
 }

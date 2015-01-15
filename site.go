@@ -4,6 +4,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"log"
+	"math"
 	"regexp"
 	"strings"
 )
@@ -37,6 +38,7 @@ func (s *Site) generatePassphrase(profile, passphrase string) []byte {
 
 func (s *Site) applyCriteria(sha []byte) []byte {
 	hash := []byte(fmt.Sprintf("%x", sha))
+	hashUpper := []byte(fmt.Sprintf("%X", sha))
 
 	if !containsUppercase(hash, s.NumberOfUpperCase) {
 		i := 0
@@ -46,7 +48,7 @@ func (s *Site) applyCriteria(sha []byte) []byte {
 		if matches = r.FindAllIndex(hash, -1); matches != nil {
 			for _, v := range matches {
 				if i < s.NumberOfUpperCase {
-					c := strings.ToUpper(string(hash[v[0]]))
+					c := string(hashUpper[v[0]])
 					hash[v[0]] = []byte(c)[0]
 					i += 1
 				}
@@ -62,7 +64,8 @@ func (s *Site) applyCriteria(sha []byte) []byte {
 		if matches = r.FindAllIndex(hash, -1); matches != nil {
 			for _, v := range matches {
 				if i < s.NumberOfDigits {
-					hash[v[0]] = byte(i)
+					ceiling := float64(10)
+					hash[v[0]] = byte(ceiling - math.Mod(float64(i), ceiling) - 1)
 					i += 1
 				}
 			}
@@ -72,13 +75,15 @@ func (s *Site) applyCriteria(sha []byte) []byte {
 	if !containsSpecialCharacters(hash, s.SpecialCharacters, s.NumberOfSpecialCharacters) {
 		i := 0
 		r := regexp.MustCompile(`[0-9]+`)
+		l := len(s.SpecialCharacters)
 
 		var matches [][]int
 		if matches = r.FindAllIndex(hash, -1); matches != nil {
 			for _, v := range matches {
 				if i < s.NumberOfSpecialCharacters {
 					i += 1
-					hash[v[0]] = []byte(s.SpecialCharacters)[len(s.SpecialCharacters)-i]
+					idx := l - int(math.Mod(float64(i), float64(l)))
+					hash[v[0]] = []byte(s.SpecialCharacters)[idx]
 				}
 			}
 		}
