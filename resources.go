@@ -286,6 +286,12 @@ const (
                             </div>
                         </div>
                         <div class="form-group">
+                            <label for="salt" class="col-xs-3 control-label">Salt</label>
+                            <div class="col-xs-9">
+                                <input id="salt" name="salt" type="text" class="form-control" value="" />
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <div class="col-xs-offset-3 col-xs-10">
 								<button type="submit" class="btn btn-default" title="Generate a new site password">Generate Password</button>
                             </div>

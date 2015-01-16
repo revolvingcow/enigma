@@ -18,13 +18,15 @@ type Site struct {
 	NumberOfUpperCase         int    `json:numberOfUpperCase`
 	NumberOfDigits            int    `json:numberOfDigits`
 	Revision                  int    `json:revision`
+	PseudoSalt                string `json:salt,omitempty`
 	Password                  string `json:",omitempty"`
 }
 
 // Generate the passphrase
-func (s *Site) generatePassphrase(profile, passphrase string) []byte {
+func (s *Site) generatePassphrase(profile, passphrase, salt string) []byte {
 	clearText := fmt.Sprintf(
-		"%s-%s-%s-%s",
+		"%s%s-%s-%s-%s",
+		salt,
 		strings.ToLower(profile),
 		strings.ToLower(passphrase),
 		strings.ToLower(s.Host),

@@ -16,12 +16,13 @@ func TestGeneratePassphrase(t *testing.T) {
 		NumberOfSpecialCharacters: 2,
 		NumberOfDigits:            2,
 		NumberOfUpperCase:         1,
+		PseudoSalt:                "",
 	}
 	i := 0
 
 	expected := "Ce\\41ae|dc001da138"
 	for i = 0; i < 2; i++ {
-		b := site.generatePassphrase(profile, passphrase)
+		b := site.generatePassphrase(profile, passphrase, site.PseudoSalt)
 		actual := fmt.Sprintf("%s", string(b))
 		if actual != expected {
 			t.FailNow()

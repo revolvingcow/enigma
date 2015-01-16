@@ -20,6 +20,7 @@ func GenerateHandler(w http.ResponseWriter, r *http.Request) {
 	profile := r.FormValue("profile")
 	passphrase := r.FormValue("p")
 	host := r.FormValue("host")
+	salt := r.FormValue("salt")
 	minimumLength, _ := strconv.Atoi(r.FormValue("minimumLength"))
 	maximumLength, _ := strconv.Atoi(r.FormValue("maximumLength"))
 	minimumDigits, _ := strconv.Atoi(r.FormValue("minimumDigits"))
@@ -53,6 +54,7 @@ func GenerateHandler(w http.ResponseWriter, r *http.Request) {
 		NumberOfSpecialCharacters: minimumSpecialCharacters,
 		NumberOfDigits:            minimumDigits,
 		NumberOfUpperCase:         minimumUppercase,
+		PseudoSalt:                salt,
 		Revision:                  0,
 	}
 
@@ -257,7 +259,7 @@ func BookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for i, s := range sites {
-		p := s.generatePassphrase(profile, passphrase)
+		p := s.generatePassphrase(profile, passphrase, s.PseudoSalt)
 		sites[i].Password = fmt.Sprintf("%s", string(p))
 	}
 
